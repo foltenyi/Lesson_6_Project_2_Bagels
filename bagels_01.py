@@ -47,7 +47,7 @@ def getClues(p_guess, secret):
     return ' '.join(clues)
 
 
-breakpoint()  # ???? ONLY FOR DEBUGGING ????
+# breakpoint()  # ???? ONLY FOR DEBUGGING
 
 
 print(f'I am thinking of a {c.NUM_DIGITS}-digit number without repeating digits,')

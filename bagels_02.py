@@ -47,7 +47,7 @@ class Player:  # Add here what we shold know about a player
     def add(self, _guess, _clue):
         self.attempts.append((_guess, _clue))
 
-    def list(self, final):
+    def List(self, final):
         if len(self.attempts) > 0:
             print('You guessed: computer gave clue:')
             for i in range(len(self.attempts)):
@@ -125,15 +125,19 @@ def getSecretNum(n) -> str:
 def getGuess(p) -> str:  # p is an instance of class Player
     if c.NUMBER_OF_PLAYERS == 1:
         while True:
-            _guess = input(f'Guess #{guessesTaken}: ')
+            _guess = input(f'Guess #{guessesTaken} (or q): ').lower()
+            if _guess[0] == 'q':
+                return _guess
             if isGoodNumber(_guess):
                 return _guess
 
     # Multiple players
     print(f"It is Player{p.Iam+1}'s turn")
-    p.list(False)  # Not final listing
+    p.List(False)  # Not final listing
     while True:
-        _guess = input(f'Guess #{guessesTaken}: ')
+        _guess = input(f'Guess #{guessesTaken} (or q): ').lower()
+        if _guess[0] == 'q':
+            return _guess
         if isGoodNumber(_guess):
             return _guess
 
@@ -156,7 +160,7 @@ def getClues(p_guess, secret) -> str:
     return ' '.join(clues)
 
 
-breakpoint()  # ???? ONLY FOR DEBUGGING ????
+# breakpoint()  # ???? ONLY FOR DEBUGGING
 
 
 print('One or more players can play the Bagels Game.')
@@ -174,6 +178,7 @@ while True:
     getParameters()  # Into class c
     for i in range(c.NUMBER_OF_PLAYERS):
         secretNum = getSecretNum(i)
+        print(f'{ln()}. {secretNum=}')
         players.append(Player(secretNum, i))
         s = 'I have thought up a number. You' if c.NUMBER_OF_PLAYERS==1 else f'Player{i+1} you'
         print(s + f' have {c.MAX_GUESS} guesses to get it.')
@@ -186,6 +191,11 @@ while True:
             if players[i].foundIt:
                 continue
             guess = getGuess(players[i])  # Instance of class Player
+            # Any player can quit the game
+            if guess[0] == 'q':
+                print('Quitting the game ...')
+                guessesTaken = c.MAX_GUESS
+                break
             clue = getClues(guess, players[i].secretNum)
             players[i].add(guess, clue)
             print(clue)
@@ -198,7 +208,7 @@ while True:
     for i in range(len(players)):
         pr = 'Attempts' + (':' if c.NUMBER_OF_PLAYERS == 1 else f' of Player{i+1}:')
         print(pr)
-        players[i].list(True)  # Final listing
+        players[i].List(True)  # Final listing
 
     if input('Do you want to play again? (y/n): ').lower().startswith('y'):
         # Some clean up
