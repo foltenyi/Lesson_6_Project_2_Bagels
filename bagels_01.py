@@ -1,5 +1,11 @@
 ################################################################
 #
+# Brigham Young University
+# CS-043-T001:
+# Computer Science, Part 2 (TL)
+# Unit 6: Final Collaborative Project
+# Project 2-3: Bagels
+#
 # bagels_01.py
 # Made it more pythonic, more accurate, and more flexible.
 #

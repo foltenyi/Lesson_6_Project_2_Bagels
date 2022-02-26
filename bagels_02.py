@@ -1,6 +1,12 @@
 ################################################################
 # line length <= 99
 #
+# Brigham Young University
+# CS-043-T001:
+# Computer Science, Part 2 (TL)
+# Unit 6: Final Collaborative Project
+# Project 2-3: Bagels
+#
 # bagels_02.py
 # Added multiple players, if one s/he plays against the computer, if more they are
 # playing against each other.

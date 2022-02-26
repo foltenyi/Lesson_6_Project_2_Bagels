@@ -1,12 +1,15 @@
 ###############################################################################
 # Line length <= 99 characters
 #
+# Brigham Young University
+# CS-043-T001:
+# Computer Science, Part 2 (TL)
+# Unit 6: Final Collaborative Project
+# Project 2-3: Bagels
+#
 # findNumberBagels_00.py
 #
-# Helper program to
-# CS-043-T001 Part 2 - Unit 6 - Final Collaborative Project: 2-3
-# Bagels Game
-# This script to find the Secret Number.
+# Added this helper program to find the Secret Number.
 #
 # bagels.py - The base for the other versions ...
 # Taken from the book:
