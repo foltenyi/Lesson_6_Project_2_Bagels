@@ -32,8 +32,10 @@ def fl() -> str:
 class c:  # The variables not starting with '_' can be overwritten at the beginning
     # Using only class variables
     NUM_LETTERS = 5
-    DB_PATH = 'C:/Users/folte/PycharmProjects/cs043/Lesson_6/Project_2_Bagels'
-    DB_NAME = 'words_00.db'
+    DB_PATH  = 'C:/Users/folte/PycharmProjects/cs043/Lesson_6/Project_2_Bagels'
+    DB_NAME  = 'words_00.db'
+    TXT_PATH = 'C:/Users/folte/PycharmProjects/cs043/Lesson_6/Project_2_Bagels'
+    TXT_NAME = 'w_05.txt'
 
 ##################### G L O B A L S #####################
 
@@ -88,38 +90,102 @@ def isGoodWord(w) -> bool:  # w is a string
     return True
 
 
+# The input of the words can be from SQLite database or a text file containing
+# one word per line
 def getWords_SetupGame():
-    global ws, patt
-    db = c.DB_PATH + '/' + c.DB_NAME
-    connection = sqlite3.connect(db)  # words is a table in this db
-    cursor = connection.cursor()
-    tn = f'words_{c.NUM_LETTERS:02d}'
-    _ws = cursor.execute(f'SELECT * FROM {tn}').fetchall()
-    connection.close()
+    global az, c, ws, patt
+    while True:  # To get 's' or 't'
+        _a = input('How to get the words? From SQLite or text file (s/t): ').lower()
+        _ws = []
+        if _a[0] == 's':
+            db = c.DB_PATH + '/' + c.DB_NAME
+            connection = sqlite3.connect(db)  # words is a table in this db
+            cursor = connection.cursor()
+            tn = f'words_{c.NUM_LETTERS:02d}'
+            _wt = cursor.execute(f'SELECT * FROM {tn}').fetchall()
+            connection.close()
+            # Get the words from the tuples
+            for t in _wt:
+                _ws.append(t[0])
+            break
+        elif _a[0] == 't':
+            tx = c.TXT_PATH + '/' + c.TXT_NAME
+            with open(tx) as f:
+                while (w := f.readline()[:c.NUM_LETTERS]):
+                    if w[0] == '#':
+                        continue  # Allow comment line
+                    _ws.append(w)
+            break
+        else:
+            print("Please enter 's' or 't'.")
 
     _wc = _ws.copy()
-    for _w in _wc:  # _w is a tuple with one element
-        if not isGoodWord(_w[0]):
-            print(f"Delete or correct '{_w[0]}' in {tn}")
+    for _w in _wc:  # _w is a word, might be the solution
+        if not isGoodWord(_w):
+            print(f"Delete or correct '{_w}'.")
             _ws.remove(_w)
 
     # Upper case all words
     lw = []  # Will be list of all upper case words
     for i in range(len(_ws)):
-        lw.append(_ws[i][0].upper())
+        lw.append(_ws[i].upper())
 
     # Fill up _t with (n,word)
     _t = []
-    for x in lw:
+    # Make the sets first, only once.
+    _s = []
+    for z in lw:
+        _s.append(set(z))
+    for i in range(len(lw)):
         n = 0
-        for y in lw:
-            n += len(set(x) & set(y))
-        _t.append((n, x))
+        # if i%500 == 499: ???? How to print on the same line
+        #     print(f"{i+1:,d}.  {lw[i]}", end='\r')
+        for j in range(len(lw)):
+            n += len(_s[i] & _s[j])
+        _t.append((n, lw[i]))
+
     _t.sort(reverse=True)
     # Take out the words keeping the order
-    ws = []
+    """
+    breakpoint()  # ???? DEBUG
+    # Generate a 1st word, which contains the most frequently used letter in that position
+    # JUST VALID WORDS CAN BE ENTERED, BY THE WAY 'EEEEE' WAS GENERATED
+    fr = dict(zip(az, [0]*len(az)))
+    lfr = []
+    for _ in range(c.NUM_LETTERS):
+        lfr.append(fr)
+
+    ws = ["SOMETHING"]  # ws = []
     for x in _t:
-        ws.append(x[1])
+        w = x[1]
+        for i in range(len(w)):
+            lfr[i][w[i]] += 1  # This letter in this position
+        ws.append(w)
+    # Generate the very first word
+    myword = ''
+    for i in range(len(lfr)):
+        # lfr[i] is a dictionary, I don't know how to sort by value
+        count = 0
+        for k, v in lfr[i].items():
+            if v > count:
+                chr = k; count = v
+        myword += chr
+    ws[0] = myword  # Hopefully the answer from the computer will be useful
+    """
+    ws = ['XYZ']
+    # Pick up the words with the most 'E's
+    eee = []; cnt = 0
+    for x in _t:
+        w = x[1]
+        if (_c := w.count('E')) >= cnt:
+            if _c > cnt:
+                cnt = _c; eee = []  # Restart
+            eee.append(w)
+        ws.append(w)
+    # breakpoint()  # ???? DEBUG
+    print(f"Words with {cnt} 'E's")
+    print(re.sub("[',]", "", str(eee)[1:-1]))
+    ws[0] = eee[0]
     # ws setup is done
 
     # Set up the pattern for each position, everything is possible
@@ -145,6 +211,10 @@ def reducePattern(word, colors):
                 patt[i].remove(_x)
         else:
             breakpoint()  # ???? Internal error
+    for i in range(len(patt)):
+        if len(patt[i]) == 0:
+            print(f'Inconsistent color in column {i+1}')
+            exit(1)
 
 
 def deleteImpossibleWords():
@@ -154,6 +224,9 @@ def deleteImpossibleWords():
     for p in patt:
         r += '[' + ''.join(p) + ']'
 
+    print("Delete words, which does NOT correspond to the regular expression:")
+    print(f'{r}')
+    # breakpoint()  # ???? DEBUG
     # Remove all the words from ws, which does NOT satisfy the regular expression
     wsc = ws.copy()
     for w in wsc:
@@ -162,20 +235,27 @@ def deleteImpossibleWords():
             ws.remove(w)
     lwsc = len(wsc) ; lws = len(ws)
     print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
-    return r  # For further usage
+    if lws > 0:
+        print('Here is some remaining words:')
+        print(re.sub("[',]", "", str(ws[:12])[1:-1]))
 
 
-def giveHints(r):  # r is the regular expression for filtering the words
+def giveHints():  # r is the regular expression for filtering the words
     global patt
 
-    """ exec() does NOT change pri, why ????
-    pri = ite.product({1, 2}, {3, 4})  # Otherwise, pri will not be seen
-    pr = 'pri = ite.product(patt[0]'
+    r = ''
+    for p in patt:
+        r += '[' + ''.join(p) + ']'
+    """
+    # exec() does NOT change pri, why ????
+    breakpoint()  # ???? DEBUG
+    pr = 'ite.product(patt[0]'
     for i in range(1, len(patt)):
         pr += f',patt[{i}]'
     pr += ')'
-    exec(pr)  # pri is iterable for the Cartesian product, presented in tuples
+    pri = exec(pr)  # pri is iterable for the Cartesian product, presented in tuples
     """
+    # For 5-letter words
     pri = ite.product(patt[0], patt[1], patt[2], patt[3], patt[4])
 
     allWords = []
@@ -193,7 +273,7 @@ After adding some words to the database, you can try again.
     for i in range(len(allWords)):
         print(allWords[i])
         if i%15 == 14:
-            print('If any meaningful word above, add it to the database.')
+            print('If any meaningful word above, add it to the choose-able words.')
             if input("Hit Enter to continue, or 'q' to quit").lower().startswith('q'):
                 exit(1)
 
@@ -209,7 +289,7 @@ def main():
 
         while True:
             if len(ws) == 1:
-                print(f'\nThe Word might be: {ws[0][1]}\n')
+                print(f'\nThe Word might be: {ws[0]}\n')
                 break
 
             recomm = ws[0]
@@ -240,14 +320,17 @@ def main():
                 print(f"For the colors use 'b', 'g', or 'y', case insensitive.")
                 continue
 
+            if colors == "G"*c.NUM_LETTERS:
+                break
             reducePattern(recomm, colors)
-            r = deleteImpossibleWords()
+            deleteImpossibleWords()
             # If anything left, continue the game
+            # breakpoint()  # ???? DEBUG
             if len(ws) > 0:
                 continue
 
             # The word is NOT in the database.
-            giveHints(r)
+            giveHints()
             break
 
         # End of inner while True
@@ -257,6 +340,6 @@ def main():
 
 #######################################################################
 if __name__ == '__main__':
-    breakpoint()  # ???? DEBUG, to set other breakpoints
+    # breakpoint()  # ???? DEBUG, to set other breakpoints
     main()
     print('\nThanks for using this program, any suggestion is welcomed.')
