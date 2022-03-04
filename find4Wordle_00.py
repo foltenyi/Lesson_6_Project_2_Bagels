@@ -69,13 +69,17 @@ def getParameters():
 def printInstruction():
     print(
 """
-This program will give suggestion which word to give to the Wordle game.
-If you entered that word, just enter the first letters of the colors the computer
+This program will give suggestions which word to give to the Wordle game.
+If you entered the first word, just enter the first letters of the colors the computer
 answered. If you entered a different word, prepend it. E.g. for 5 letter words:
-bgbyy        - if you entered the suggested word
-frame gbyby  - if you entered 'frame', not the suggested word
+bgbyy        - if you entered the first (or only) suggested word
+frame gbyby  - if you entered 'frame', not the first of the suggested word
+If the solution word was not found, please add it to the words storage, which
+can be a text file, order doesn't matter, but try to keep it ordered.
+If the suggested word was not accepted by Wordle, please delete it, or
+comment out by puting '#' in the first column.
 For adding / deleting / editing words in the SQLite database you can use
-DB Browser for SQLite
+DB Browser for SQLite utility program.
 """)
 
 
@@ -235,14 +239,13 @@ def deleteImpossibleWords():
             ws.remove(w)
     lwsc = len(wsc) ; lws = len(ws)
     print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
-    if lws > 0:
-        print('Here is some remaining words:')
-        print(re.sub("[',]", "", str(ws[:12])[1:-1]))
 
 
 def giveHints():  # r is the regular expression for filtering the words
     global patt
 
+    print('\nThe solution word is NOT in the storage, after finding it,')
+    print('please add it to the text file or the SQLite database\n')
     r = ''
     for p in patt:
         r += '[' + ''.join(p) + ']'
@@ -263,12 +266,12 @@ def giveHints():  # r is the regular expression for filtering the words
         allWords.append(''.join(t))
 
     print(
-f"""As everywhere, case does NOT matter. The word isn't in the database. The word should
+f"""As everywhere, case does NOT matter. The missing word should
 correspond to the next regular expression:
 {r}
-{len(allWords):,d} possible string can be generated. They will be printed in small groups,
-if any of them is a meaningful word, please add it to the database.
-After adding some words to the database, you can try again.
+{len(allWords):,d} possible strings can be generated. They will be printed in small
+groups, if any of them is a meaningful word, please add it to the word storage.
+After adding some words, you can try again.
 """)
     for i in range(len(allWords)):
         print(allWords[i])
@@ -290,10 +293,11 @@ def main():
         while True:
             if len(ws) == 1:
                 print(f'\nThe Word might be: {ws[0]}\n')
-                break
+            if len(ws) > 1:
+                print('Here are some recommended words:')
+                print(re.sub("[',]", "", str(ws[:12])[1:-1]))
 
             recomm = ws[0]
-            print(f'Try: {recomm}')
             # Process the answer from the Wordle game
             ans = input('Enter the first letter of the colors (or 9 to quit): ')
             ans = ans.upper()
@@ -310,6 +314,7 @@ def main():
                     continue
             if len(ans) != 1:
                 print(f"You entered a wrong answer, please read the instruction.")
+                printInstruction()
                 continue
 
             colors = ans[0]  # It must be c.NUM_LETTERS long and containing [BGY] only
@@ -321,7 +326,7 @@ def main():
                 continue
 
             if colors == "G"*c.NUM_LETTERS:
-                break
+                break  # THE WORD IS FOUND
             reducePattern(recomm, colors)
             deleteImpossibleWords()
             # If anything left, continue the game
