@@ -201,18 +201,45 @@ def getWords_SetupGame():
 
 def reducePattern(word, colors):
     global patt, ws
+    wc = word
+    # After getting for RESEE - BYBBB, i.e. for E I got Y and BB
     for i in range(len(colors)):
-        _x = word[i]
+        if (_l := wc[i]) == '#':
+            continue  # The processed letter replace with '#'
         _c = colors[i]
         if _c == 'B':  # From all position word[i] letter should be removed
             for j in range(len(patt)):
-                if _x in patt[j]:
-                    patt[j].remove(_x)
+                if _l in patt[j]:
+                    patt[j].remove(_l)
+            wc = wc.replace(_l, '#', 1)  # Processed
         elif _c == 'G':  # In the ith position only word[i] can be
-            patt[i] = {_x}
+            patt[i] = {_l}
+            wc = wc.replace(_l, '#', 1)  # Processed
+            if wc.find(_l) > 0:
+                print('Asses the answer!')
+                breakpoint()
         elif _c == 'Y':  # Remove word[i] letter from the current position
-            if _x in patt[i]:
-                patt[i].remove(_x)
+            if _l in patt[i]:
+                patt[i].remove(_l)
+            wc = wc.replace(_l, '#', 1)  # Processed
+            bl = gr = 0; ye = 1
+            while (j := wc.find(_l)) > 0:
+                wc = wc.replace(_l, '#', 1)  # Processed
+                bl += 1 if colors[j] == 'B' else 0
+                ye += 1 if colors[j] == 'Y' else 0
+                if colors[j] == 'G':
+                    gr += 1
+                    patt[i] = {_l}
+            if bl > 0 and gr == 0:
+                print(f"Delete word, which does NOT contain exactly {ye} '{_l}'")
+                wsc = ws.copy()
+                for w in wsc:
+                    if w.count(_l) != ye:
+                        ws.remove(w)
+                lwsc = len(wsc); lws = len(ws)
+                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+            else:
+                breakpoint()  # ???? Program later
         else:
             breakpoint()  # ???? Internal error
     for i in range(len(patt)):
@@ -228,7 +255,7 @@ def deleteImpossibleWords():
     for p in patt:
         r += '[' + ''.join(p) + ']'
 
-    print("Delete words, which does NOT correspond to the regular expression:")
+    print("Delete word, which does NOT correspond to the regular expression:")
     print(f'{r}')
     # breakpoint()  # ???? DEBUG
     # Remove all the words from ws, which does NOT satisfy the regular expression
