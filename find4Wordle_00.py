@@ -253,10 +253,19 @@ def reducePattern(word, colors):
                     bl += 1 if cc[j] == 'B' else 0
                     ye += 1 if cc[j] == 'Y' else 0
             if bl == 0 and ye == 1:
-                # Can't do anything more, continue
                 wc = wc[:i] + '#' + wc[i + 1:]
                 cc = cc[:i] + '#' + cc[i + 1:]
+                print(f"Delete word, which does NOT contain '{_l}' or in position {i+1}")
+                wsc = ws.copy()
+                _p = (-1, i)  # The interpreter should do this loop cleaning, does it?
+                for w in wsc:
+                    if w.find(_l) in _p:
+                        ws.remove(w)
+                lwsc = len(wsc);  lws = len(ws)
+                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             elif bl > 0 and ye == 1:
+                wc = wc[:i] + '#' + wc[i + 1:]
+                cc = cc[:i] + '#' + cc[i + 1:]
                 print(f"Delete word, which does NOT contain exactly {ye} '{_l}'")
                 wsc = ws.copy()
                 for w in wsc:
