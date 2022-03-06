@@ -201,51 +201,94 @@ def getWords_SetupGame():
 
 def reducePattern(word, colors):
     global patt, ws
-    wc = word
+    wc = word;  cc = colors
+    if len(wc) != len(cc):
+        breakpoint()  # Internal error ????
     # After getting for RESEE - BYBBB, i.e. for E I got Y and BB
-    for i in range(len(colors)):
+    # After getting for RESEE - YBBBG, 1st E processing was wrong
+
+    # Process the Greens, they have higher priority, first, including its duplicate letters
+    for i in range(len(cc)):
         if (_l := wc[i]) == '#':
-            continue  # The processed letter replace with '#'
-        _c = colors[i]
-        if _c == 'B':  # From all position word[i] letter should be removed
-            for j in range(len(patt)):
-                if _l in patt[j]:
-                    patt[j].remove(_l)
-            wc = wc.replace(_l, '#', 1)  # Processed
-        elif _c == 'G':  # In the ith position only word[i] can be
-            patt[i] = {_l}
-            wc = wc.replace(_l, '#', 1)  # Processed
-            if wc.find(_l) > 0:
-                print('Asses the answer!')
-                breakpoint()
-        elif _c == 'Y':  # Remove word[i] letter from the current position
+            continue  # The processed letter was replaced with '#'
+        if (_c := cc[i]) == 'G':
+            patt[i] = {_l}  # This is sure, what else?
+            bl = gr = ye = 0  # Check other occurrence of this letter
+            for j in range(len(wc)):
+                if wc[j] == _l:
+                    bl += 1 if cc[j] == 'B' else 0  # Simpler then dictionary
+                    gr += 1 if cc[j] == 'G' else 0
+                    ye += 1 if cc[j] == 'Y' else 0
+
+            if bl == 0 and gr == 1 and ye == 0:
+                # I know nothing more about _l, patt[i] already set
+                pass  # So in wc and cc the '#' will be set
+            elif bl > 0 and gr == 1 and ye == 0:
+                # _l occurs only once in the ith position, delete from the others
+                for j in range(len(patt)):
+                    if i != j and _l in patt[j]:
+                        patt[j].remove(_l)
+            else:
+                print(f'{ln()}. Finish for {bl=} {gr=} {ye=}')
+                breakpoint()  # ???? Figure out later what to do
+
+            # Mark the processed positions in wc and cc with '#' character
+            for j in range(len(wc)):
+                if wc[j] == _l:
+                    wc = wc[:j] + '#' + wc[j+1:]
+                    cc = cc[:j] + '#' + cc[j+1:]
+            # breakpoint()  # ???? DEBUG
+
+    # Process the Yellow, the colors, cc, don't contain 'G'
+    for i in range(len(cc)):
+        if (_l := wc[i]) == '#':
+            continue  # The processed letter was replaced with '#'
+        _c = cc[i]
+        if _c == 'Y':  # Remove word[i] letter from the current position
             if _l in patt[i]:
                 patt[i].remove(_l)
-            wc = wc.replace(_l, '#', 1)  # Processed
-            bl = gr = 0; ye = 1
-            while (j := wc.find(_l)) > 0:
-                wc = wc.replace(_l, '#', 1)  # Processed
-                bl += 1 if colors[j] == 'B' else 0
-                ye += 1 if colors[j] == 'Y' else 0
-                if colors[j] == 'G':
-                    gr += 1
-                    patt[i] = {_l}
-            if bl > 0 and gr == 0:
+            bl = ye = 0
+            for j in range(len(wc)):
+                if wc[j] == _l:
+                    bl += 1 if cc[j] == 'B' else 0
+                    ye += 1 if cc[j] == 'Y' else 0
+            if bl == 0 and ye == 1:
+                # Can't do anything more, continue
+                wc = wc[:i] + '#' + wc[i + 1:]
+                cc = cc[:i] + '#' + cc[i + 1:]
+            elif bl > 0 and ye == 1:
                 print(f"Delete word, which does NOT contain exactly {ye} '{_l}'")
                 wsc = ws.copy()
                 for w in wsc:
                     if w.count(_l) != ye:
                         ws.remove(w)
-                lwsc = len(wsc); lws = len(ws)
+                lwsc = len(wsc);  lws = len(ws)
                 print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             else:
-                breakpoint()  # ???? Program later
-        else:
+                print(f'{ln()}. Finish for {bl=} {ye=}')
+                breakpoint()  # ???? Program that case, which got here
+
+    # Process the Black, the colors, cc, don't contain 'G' and 'Y'
+    for i in range(len(cc)):
+        if (_l := wc[i]) == '#':
+            continue  # The processed letter was replaced with '#'
+        _c = cc[i]
+        if _c == 'B':  # From all position word[i] letter should be removed
+            for j in range(len(patt)):
+                if _l in patt[j]:
+                    patt[j].remove(_l)
+            wc = wc[:i] + '#' + wc[i+1:]
+            cc = cc[:i] + '#' + cc[i+1:]
+
+        else:  # Unknown color letter
+            print(f'{ln()}. Check {wc=} {cc=}')
             breakpoint()  # ???? Internal error
+
+    # Some sanity check, it can be program or user error.
     for i in range(len(patt)):
         if len(patt[i]) == 0:
             print(f'Inconsistent color in column {i+1}')
-            exit(1)
+            breakpoint()
 
 
 def deleteImpossibleWords():
