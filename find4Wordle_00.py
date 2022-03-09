@@ -212,13 +212,24 @@ def reducePattern(word, colors):
         if (_l := wc[i]) == '#':
             continue  # The processed letter was replaced with '#'
         if (_c := cc[i]) == 'G':
-            patt[i] = {_l}  # This is sure, what else?
+            breakpoint()  # ???? DEBUG
             bl = gr = ye = 0  # Check other occurrence of this letter
+            yep = []  # Where are the Yellow positions, list only for increasing order in print
             for j in range(len(wc)):
                 if wc[j] == _l:
-                    bl += 1 if cc[j] == 'B' else 0  # Simpler then dictionary
-                    gr += 1 if cc[j] == 'G' else 0
-                    ye += 1 if cc[j] == 'Y' else 0
+                    if cc[j] == 'B':
+                        bl += 1
+                    elif cc[j] == 'G':
+                        gr += 1
+                        patt[j] = {_l}
+                    elif cc[j] == 'Y':
+                        ye += 1
+                        yep.append(j)
+                        if _l in patt[j]:
+                            patt[j].remove(_l)
+                    else:
+                        print(f'{ln()}. ???? INTERNAL ERROR')
+                        breakpoint()  # ???? INTERNAL ERROR
 
             if bl == 0 and gr == 1 and ye == 0:
                 # I know nothing more about _l, patt[i] already set
@@ -228,6 +239,24 @@ def reducePattern(word, colors):
                 for j in range(len(patt)):
                     if i != j and _l in patt[j]:
                         patt[j].remove(_l)
+            elif bl > 0 and ye > 0:
+                # Because bl > 0, the word contains gr+ye _l letter. Here the words with NOT
+                # gr+ye _l letter or in the Yellow position will be filtered out
+                s = f"Delete word, which does NOT contain {gr+ye} '{_l}' or in position"
+                for _p in yep:
+                    s += f' {_p}'
+                print(s)
+                wsc = ws.copy()
+                for w in wsc:
+                    if w.count(_l) != (gr+ye):
+                        ws.remove(w)
+                        continue
+                    for _p in yep:
+                        if w[_p] == _l:
+                            ws.remove(w)
+
+                lwsc = len(wsc);  lws = len(ws)
+                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             else:
                 print(f'{ln()}. Finish for {bl=} {gr=} {ye=}')
                 breakpoint()  # ???? Figure out later what to do
@@ -257,7 +286,7 @@ def reducePattern(word, colors):
                 cc = cc[:i] + '#' + cc[i + 1:]
                 print(f"Delete word, which does NOT contain '{_l}' or in position {i+1}")
                 wsc = ws.copy()
-                _p = (-1, i)  # The interpreter should do this loop cleaning, does it?
+                _p = {-1, i}  # The interpreter should do this loop cleaning, does it?
                 for w in wsc:
                     if w.find(_l) in _p:
                         ws.remove(w)
@@ -267,9 +296,10 @@ def reducePattern(word, colors):
                 wc = wc[:i] + '#' + wc[i + 1:]
                 cc = cc[:i] + '#' + cc[i + 1:]
                 print(f"Delete word, which does NOT contain exactly {ye} '{_l}'")
+                print(f"    or contains '{_l}' in position {i+1}")
                 wsc = ws.copy()
                 for w in wsc:
-                    if w.count(_l) != ye:
+                    if w.count(_l) != ye or w.find(_l) == i:
                         ws.remove(w)
                 lwsc = len(wsc);  lws = len(ws)
                 print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
