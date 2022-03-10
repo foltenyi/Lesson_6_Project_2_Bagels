@@ -130,7 +130,7 @@ def getWords_SetupGame():
     _wc = _ws.copy()
     for _w in _wc:  # _w is a word, might be the solution
         if not isGoodWord(_w):
-            print(f"Delete or correct '{_w}'.")
+            print(f"{ln()}. Delete or correct '{_w}'.")
             _ws.remove(_w)
 
     # Upper case all words
@@ -232,6 +232,7 @@ def reducePattern(word, colors):
                         ye += 1
                         yep.append(j)
                         if _l in patt[j]:
+                            print(f"{ln()}. Remove '{_l}' from position {j+1}")
                             patt[j].remove(_l)
                     else:
                         print(f'{ln()}. ???? INTERNAL ERROR')
@@ -242,7 +243,7 @@ def reducePattern(word, colors):
                 pass  # So in wc and cc the '#' will be set
             elif bl == 0 and ye > 0:
                 # We know _l at least gr+ye times is in the word, and can't be in yep
-                s1 = f"Delete word, which does NOT contain at least {gr+ye} '{_l}'"
+                s1 = f"{ln()}. Delete word, which does NOT contain at least {gr+ye} '{_l}'"
                 s2 = f"or in position"
                 for _p in yep:
                     s2 += f' {_p+1}'
@@ -257,16 +258,21 @@ def reducePattern(word, colors):
                             ws.remove(w)
                             break
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             elif bl > 0 and ye == 0:
                 # _l occurs in the right position(s), delete from the others
+                _p = ''
                 for j in range(len(patt)):
                     if j not in grp and _l in patt[j]:
+                        _p += f" {j+1}"
                         patt[j].remove(_l)
+                if len(_p) > 0:
+                    print(f"{ln()}. Remove '{_l}' from position {_p}")
+
             elif bl > 0 and ye > 0:
                 # Because bl > 0, the word contains gr+ye _l letter. Here the words with NOT
                 # gr+ye _l letter or in the Yellow position will be filtered out
-                s = f"Delete word, which does NOT contain {gr+ye} '{_l}' or in position"
+                s = f"{ln()}. Delete word, which does NOT contain {gr+ye} '{_l}' or in position"
                 for _p in yep:
                     s += f' {_p+1}'
                 print(s)
@@ -300,6 +306,7 @@ def reducePattern(word, colors):
         _c = cc[i]
         if _c == 'Y':  # Remove word[i] letter from the current position
             if _l in patt[i]:
+                print(f"{ln()}. Remove '{_l}' from position {i+1}")
                 patt[i].remove(_l)
             bl = ye = 0
             for j in range(len(wc)):
@@ -309,7 +316,7 @@ def reducePattern(word, colors):
             if bl == 0 and ye == 1:
                 wc = wc[:i] + '#' + wc[i + 1:]
                 cc = cc[:i] + '#' + cc[i + 1:]
-                print(f"Delete word, which does NOT contain '{_l}' or in position {i+1}")
+                print(f"{ln()}. Delete word, which does NOT contain '{_l}' or in position {i+1}")
                 wsc = ws.copy()
                 _p = {-1, i}  # The interpreter should do this loop cleaning, does it?
                 for w in wsc:
@@ -320,7 +327,7 @@ def reducePattern(word, colors):
             elif bl > 0 and ye == 1:
                 wc = wc[:i] + '#' + wc[i + 1:]
                 cc = cc[:i] + '#' + cc[i + 1:]
-                print(f"Delete word, which does NOT contain exactly {ye} '{_l}'")
+                print(f"{ln()}. Delete word, which does NOT contain exactly {ye} '{_l}'")
                 print(f"    or contains '{_l}' in position {i+1}")
                 wsc = ws.copy()
                 for w in wsc:
@@ -338,9 +345,13 @@ def reducePattern(word, colors):
             continue  # The processed letter was replaced with '#'
         _c = cc[i]
         if _c == 'B':  # From all position word[i] letter should be removed
+            _p = ''
             for j in range(len(patt)):
                 if _l in patt[j]:
+                    _p += f" {j+1}"
                     patt[j].remove(_l)
+            if len(_p) > 0:
+                print(f"{ln()}. Remove '{_l}' from position {_p}")
             wc = wc[:i] + '#' + wc[i+1:]
             cc = cc[:i] + '#' + cc[i+1:]
 
@@ -362,7 +373,7 @@ def deleteImpossibleWords():
     for p in patt:
         r += '[' + ''.join(p) + ']'
 
-    print("Delete word, which does NOT correspond to the regular expression:")
+    print(f"{ln()}. Delete word, which does NOT correspond to the regular expression:")
     print(f'{r}')
     # breakpoint()  # ???? DEBUG
     # Remove all the words from ws, which does NOT satisfy the regular expression
@@ -417,7 +428,7 @@ After adding some words, you can try again.
 
 #######################################################################
 def main():
-    global patt, ws
+    global ws
     # Double loop, the outher for repeating games, the inner to find the WORD.
     while True:
         getParameters()
