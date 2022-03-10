@@ -228,6 +228,7 @@ def reducePattern(word, colors):
                         gr += 1
                         grp.append(j)
                         patt[j] = {_l}
+                        print(f"{ln()}. Position {j} is '{_l}'")
                     elif cc[j] == 'Y':
                         ye += 1
                         yep.append(j)
@@ -308,14 +309,17 @@ def reducePattern(word, colors):
             if _l in patt[i]:
                 print(f"{ln()}. Remove '{_l}' from position {i+1}")
                 patt[i].remove(_l)
-            bl = ye = 0
+            bl = ye = 0;  blp = []
             for j in range(len(wc)):
                 if wc[j] == _l:
-                    bl += 1 if cc[j] == 'B' else 0
+                    if cc[j] == 'B':
+                        bl += 1
+                        blp.append(j)
                     ye += 1 if cc[j] == 'Y' else 0
+
             if bl == 0 and ye == 1:
-                wc = wc[:i] + '#' + wc[i + 1:]
-                cc = cc[:i] + '#' + cc[i + 1:]
+                wc = wc[:i] + '#' + wc[i+1:]
+                cc = cc[:i] + '#' + cc[i+1:]
                 print(f"{ln()}. Delete word, which does NOT contain '{_l}' or in position {i+1}")
                 wsc = ws.copy()
                 _p = {-1, i}  # The interpreter should do this loop cleaning, does it?
@@ -323,18 +327,23 @@ def reducePattern(word, colors):
                     if w.find(_l) in _p:
                         ws.remove(w)
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             elif bl > 0 and ye == 1:
-                wc = wc[:i] + '#' + wc[i + 1:]
-                cc = cc[:i] + '#' + cc[i + 1:]
+                wc = wc[:i] + '#' + wc[i+1:]
+                cc = cc[:i] + '#' + cc[i+1:]
+                # And the same for the black positions
+                for j in blp:
+                    wc = wc[:j] + '#' + wc[j+1:]
+                    cc = cc[:j] + '#' + cc[j+1:]
+
                 print(f"{ln()}. Delete word, which does NOT contain exactly {ye} '{_l}'")
-                print(f"    or contains '{_l}' in position {i+1}")
+                print(f"         or contains '{_l}' in position {i+1}")
                 wsc = ws.copy()
                 for w in wsc:
                     if w.count(_l) != ye or w.find(_l) == i:
                         ws.remove(w)
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             else:
                 print(f'{ln()}. Finish for {bl=} {ye=}')
                 breakpoint()  # ???? Program that case, which got here
@@ -418,12 +427,17 @@ correspond to the next regular expression:
 groups, if any of them is a meaningful word, please add it to the word storage.
 After adding some words, you can try again.
 """)
+    inOneRow = 12;  gr = 8;  r = ''
     for i in range(len(allWords)):
-        print(allWords[i])
-        if i%15 == 14:
-            print('If any meaningful word above, add it to the choose-able words.')
-            if input("Hit Enter to continue, or 'q' to quit").lower().startswith('q'):
-                exit(1)
+        r += ' ' + allWords[i]
+        if i % inOneRow == inOneRow - 1:
+            print(r);  r = ''
+            if i % (gr*inOneRow) == (gr*inOneRow) - 1:
+                print('If any meaningful word above, add it to the choose-able words.')
+                if input("Hit Enter to continue, or 'q' to quit").lower().startswith('q'):
+                    exit(1)
+    if len(r) > 0:
+        print(r)
 
 
 #######################################################################
