@@ -440,7 +440,7 @@ def main():
                 print(f'\nThe Word might be: {ws[0]}\n')
             if len(ws) > 1:
                 print('Here are some recommended words:')
-                print(re.sub("[',]", "", str(ws[:12])[1:-1]))
+                print(re.sub("[',]", "", str(ws[:14])[1:-1]))
 
             recomm = ws[0]
             # Process the answer from the Wordle game
