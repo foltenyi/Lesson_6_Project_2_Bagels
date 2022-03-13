@@ -51,6 +51,8 @@ patt = []  # list of c.NUM_LETTERS sets, each set contains the letters can be
 ws = []  # ws[i] is a potential word sorted by how many times the letters in word can be found
 # in all words read from the SQLite database sorted in descending order.
 # The words read from the database, converted to upper case.
+inOneRow = 12  # How many words print in one row. It could be moved to class c,
+# and let the user to set it
 
 ##################### F U N C T I O N S #####################
 
@@ -197,8 +199,9 @@ def getWords_SetupGame():
     # ws setup is done
 
     # Set up the pattern for each position, everything is possible
+    patt = []
     for i in range(c.NUM_LETTERS):
-        patt.append(set(az))
+        patt.append(set(az).copy())
 
     pass  # ???? to set breakpoint
 
@@ -228,7 +231,7 @@ def reducePattern(word, colors):
                         gr += 1
                         grp.append(j)
                         patt[j] = {_l}
-                        print(f"{ln()}. Position {j} is '{_l}'")
+                        print(f"{ln()}. Position {j+1} is '{_l}'")
                     elif cc[j] == 'Y':
                         ye += 1
                         yep.append(j)
@@ -335,6 +338,9 @@ def reducePattern(word, colors):
                 for j in blp:
                     wc = wc[:j] + '#' + wc[j+1:]
                     cc = cc[:j] + '#' + cc[j+1:]
+                    if _l in patt[j]:
+                        print(f"{ln()}. Remove '{_l}' from position {j+1}")
+                        patt[j].remove(_l)
 
                 print(f"{ln()}. Delete word, which does NOT contain exactly {ye} '{_l}'")
                 print(f"         or contains '{_l}' in position {i+1}")
@@ -427,7 +433,7 @@ correspond to the next regular expression:
 groups, if any of them is a meaningful word, please add it to the word storage.
 After adding some words, you can try again.
 """)
-    inOneRow = 12;  gr = 8;  r = ''
+    gr = 8;  r = ''
     for i in range(len(allWords)):
         r += ' ' + allWords[i]
         if i % inOneRow == inOneRow - 1:
@@ -454,7 +460,13 @@ def main():
                 print(f'\nThe Word might be: {ws[0]}\n')
             if len(ws) > 1:
                 print('Here are some recommended words:')
-                print(re.sub("[',]", "", str(ws[:14])[1:-1]))
+                r = ''
+                for i in range(min(8*inOneRow, len(ws))):
+                    r += ' ' + ws[i]
+                    if i % inOneRow == inOneRow - 1:
+                        print(r);  r = ''
+                if len(r) > 0:
+                    print(r)
 
             recomm = ws[0]
             # Process the answer from the Wordle game
