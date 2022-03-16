@@ -49,6 +49,7 @@ patt = []  # list of c.NUM_LETTERS sets, each set contains the letters can be
 # in that patt position, start with set(az)
 
 ws = []  # ws[i] is a potential word sorted by how many times the letters in word can be found
+wsCopy = []  # To keep the original words
 # in all words read from the SQLite database sorted in descending order.
 # The words read from the database, converted to upper case.
 inOneRow = 12  # How many words print in one row. It could be moved to class c,
@@ -103,7 +104,7 @@ def isGoodWord(w) -> bool:  # w is a string
 # The input of the words can be from SQLite database or a text file containing
 # one word per line
 def getWords_SetupGame():
-    global az, c, ws, patt
+    global az, c, ws, wsCopy, patt
     while True:  # To get 's' or 't'
         _a = input('How to get the words? From SQLite or text file (s/t): ').lower()
         _ws = []
@@ -196,6 +197,7 @@ def getWords_SetupGame():
     print(f"Words with {cnt} 'E's")
     print(re.sub("[',]", "", str(eee)[1:-1]))
     ws[0] = eee[0]
+    wsCopy = ws.copy()
     # ws setup is done
 
     # Set up the pattern for each position, everything is possible
@@ -401,6 +403,33 @@ def deleteImpossibleWords():
     print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
 
 
+def ifDiffOnlyInOneColumn():
+    global ws, wsCopy
+    if len(ws) < 3:
+        return  # Just try what was hinted
+    # The words in ws do they differ in only one column?
+    for i in range(len(w := ws[0])):
+        r = w[:i] + '.' + w[i+1:]  # Make a regex to check the words
+        for x in ws:
+            m = re.match(r, x)
+            if m is None:  # or m.string != x:
+                break  # They differ not only in column i
+        else: # Words in ws differ only in column i+1
+            # Make a set from the letters from column i+1
+            s = set()
+            for x in ws:
+                s.add(x[i])
+            cnt = 0; ask = []
+            for w in wsCopy:
+                if (l := len(s & set(w))) >= cnt:
+                    if l > cnt:
+                        cnt = l;  ask = []
+                    ask.append(w)
+            # breakpoint()  # ???? DEBUG
+            print(f'Try to eliminate letters in column {i+1}')
+            print('', re.sub("[',]", "", str(ask[:inOneRow])[1:-1]))
+
+
 def giveHints():  # r is the regular expression for filtering the words
     global patt
 
@@ -467,6 +496,7 @@ def main():
                         print(r);  r = ''
                 if len(r) > 0:
                     print(r)
+                ifDiffOnlyInOneColumn()
 
             recomm = ws[0]
             # Process the answer from the Wordle game
@@ -510,7 +540,7 @@ def main():
             break
 
         # End of inner while True
-        if input('Do you want another assistance? (y/n): ').lower().startswith('n'):
+        if input('\nDo you want another assistance? (y/n): ').lower().startswith('n'):
             break
 
 
