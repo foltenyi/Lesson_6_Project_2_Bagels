@@ -155,10 +155,11 @@ def getWords_SetupGame():
             n += len(_s[i] & _s[j])
         _t.append((n, lw[i]))
 
-    _t.sort(reverse=True)
+    # breakpoint()  # ???? DEBUG
+    _t.sort(reverse=True, key=lambda x: x[0])  # Don't sort by x[1]
     # Take out the words keeping the order
     """
-    breakpoint()  # ???? DEBUG
+    # breakpoint()  # ???? DEBUG
     # Generate a 1st word, which contains the most frequently used letter in that position
     # JUST VALID WORDS CAN BE ENTERED, BY THE WAY 'EEEEE' WAS GENERATED
     fr = dict(zip(az, [0]*len(az)))
@@ -183,9 +184,8 @@ def getWords_SetupGame():
         myword += chr
     ws[0] = myword  # Hopefully the answer from the computer will be useful
     """
-    ws = ['XYZ']
     # Pick up the words with the most 'E's
-    eee = []; cnt = 0
+    ws = [];  eee = []; cnt = 0
     for x in _t:
         w = x[1]
         if (_c := w.count('E')) >= cnt:
@@ -194,10 +194,9 @@ def getWords_SetupGame():
             eee.append(w)
         ws.append(w)
     # breakpoint()  # ???? DEBUG
-    print(f"Words with {cnt} 'E's")
+    print(f"Words with {cnt} 'E's, use one of them, if you wish.")
     print(re.sub("[',]", "", str(eee)[1:-1]))
-    ws[0] = eee[0]
-    wsCopy = ws.copy()
+    wsCopy = ws.copy()  # Keep the original words
     # ws setup is done
 
     # Set up the pattern for each position, everything is possible
@@ -403,6 +402,38 @@ def deleteImpossibleWords():
     print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
 
 
+def giveEliminatingWords(col):
+    global patt, ws, wsCopy, inOneRow
+    # Make a set from the letters from column i+1
+    s = set()
+    for x in ws:
+        s.add(x[col])
+    cnt = 0;  ask = []
+    for w in wsCopy:
+        if (l := len(s & set(w))) >= cnt:
+            if l > cnt:
+                cnt = l;  ask = []
+            ask.append(w)
+
+    # breakpoint()  # ???? DEBUG
+    # Sort ask against the set on position col, taking out the other sets.
+    s = patt[col]
+    for i in range(len(patt)):
+        if i != col:
+            s -= patt[i]
+
+    # Fill up t with (n,word), n - how many common letters are in s
+    t = []
+    for i in range(len(ask)):
+        t.append((len(s & set(ask[i])), ask[i]))
+    t.sort(reverse=True, key=lambda x: x[0])  # For equal numbers don't take x[1]
+    ask = []
+    for i in range(len(t)):
+        ask.append(t[i][1])
+    print(f'Try to eliminate letters in column {col+1}')
+    print('', re.sub("[',]", "", str(ask[:inOneRow])[1:-1]))
+
+
 def ifDiffOnlyInOneColumn():
     global ws, wsCopy
     if len(ws) < 3:
@@ -415,19 +446,7 @@ def ifDiffOnlyInOneColumn():
             if m is None:  # or m.string != x:
                 break  # They differ not only in column i
         else: # Words in ws differ only in column i+1
-            # Make a set from the letters from column i+1
-            s = set()
-            for x in ws:
-                s.add(x[i])
-            cnt = 0; ask = []
-            for w in wsCopy:
-                if (l := len(s & set(w))) >= cnt:
-                    if l > cnt:
-                        cnt = l;  ask = []
-                    ask.append(w)
-            # breakpoint()  # ???? DEBUG
-            print(f'Try to eliminate letters in column {i+1}')
-            print('', re.sub("[',]", "", str(ask[:inOneRow])[1:-1]))
+            giveEliminatingWords(i)
 
 
 def giveHints():  # r is the regular expression for filtering the words
@@ -440,7 +459,7 @@ def giveHints():  # r is the regular expression for filtering the words
         r += '[' + ''.join(p) + ']'
     """
     # exec() does NOT change pri, why ????
-    breakpoint()  # ???? DEBUG
+    # breakpoint()  # ???? DEBUG
     pr = 'ite.product(patt[0]'
     for i in range(1, len(patt)):
         pr += f',patt[{i}]'
