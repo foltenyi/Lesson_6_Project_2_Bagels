@@ -9,7 +9,7 @@
 # Project 2-3: Bagels
 # ... but there are similarities with the program, which helps to find the Secret Number
 #
-# find4Wordle_00.py
+# find4Wordle_01.py
 #     Copy of 00, it works fine, 00 does not. Why?
 #
 # find4Wordle_00.py
@@ -402,12 +402,15 @@ def deleteImpossibleWords():
     print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
 
 
-def giveEliminatingWords(col):
+def giveEliminatingWords(cls):  # is a set with column indices
     global patt, ws, wsCopy, inOneRow
-    # Make a set from the letters from column i+1
+    # Make a set from the letters from column in cls
     s = set()
     for x in ws:
-        s.add(x[col])
+        for i in range(len(ws[0])):
+            if i in cls:
+                s.add(x[i])
+    # print(f'{ln()}. {s=}')  # ???? DEBUG
     cnt = 0;  ask = []
     for w in wsCopy:
         if (l := len(s & set(w))) >= cnt:
@@ -415,12 +418,15 @@ def giveEliminatingWords(col):
                 cnt = l;  ask = []
             ask.append(w)
 
-    # breakpoint()  # ???? DEBUG
     # Sort ask against the set on position col, taking out the other sets.
-    s = patt[col]
+    s = set()
+    # breakpoint()  # ???? DEBUG
     for i in range(len(patt)):
-        if i != col:
-            s -= patt[i]
+        if i in cls:
+          s = s.union(patt[i])  # Should it be '+'?
+    for i in range(len(patt)):
+        if i not in cls:
+            s -= set(ws[0][i])
 
     # Fill up t with (n,word), n - how many common letters are in s
     t = []
@@ -430,15 +436,20 @@ def giveEliminatingWords(col):
     ask = []
     for i in range(len(t)):
         ask.append(t[i][1])
-    print(f'Try to eliminate letters in column {col+1}')
+    print(f'{ln()}. Try to eliminate letters in column ', end="")
+    for i in cls:
+        print("", i+1, end="")
+    print()
+    print(f'{ln()}. {len(ask)=}')  # ???? DEBUG
     print('', re.sub("[',]", "", str(ask[:inOneRow])[1:-1]))
 
 
-def ifDiffOnlyInOneColumn():
+def ifDiffIn1or2or3Columns():
     global ws, wsCopy
     if len(ws) < 3:
         return  # Just try what was hinted
-    # The words in ws do they differ in only one column?
+    # The words in ws do they differ in only one, two or three columns?
+    # Check for ONE first ...
     for i in range(len(w := ws[0])):
         r = w[:i] + '.' + w[i+1:]  # Make a regex to check the words
         for x in ws:
@@ -446,7 +457,34 @@ def ifDiffOnlyInOneColumn():
             if m is None:  # or m.string != x:
                 break  # They differ not only in column i
         else: # Words in ws differ only in column i+1
-            giveEliminatingWords(i)
+            giveEliminatingWords({i})
+            return
+
+    # Check whether the remainding words differ only in TWO columns
+    for i in range(len(w := ws[0])):
+        for j in range(i+1, len(w)):
+            r = w[:i] + '.' + w[i+1:j] + '.' + w[j+1:]
+            # print(f'{ln()}. {r=}')  # ???? DEBUG
+            for x in ws:
+                m = re.match(r, x)
+                if m is None:  # or m.string != x:
+                    break  # They differ not only in column i, j
+            else: # Words in ws differ only in column i+1 and j+1
+                giveEliminatingWords({i, j})
+                return
+
+    # Check whether the remainding words differ only in THREE columns
+    for i in range(len(w := ws[0])):
+        for j in range(i+1, len(w)):
+            for k in range(j+1, len(w)):
+                r = w[:i]+'.'+w[i+1:j]+'.'+w[j+1:k]+'.'+w[k+1:]
+                # print(f'{ln()}. {r=}')  # ???? DEBUG
+                for x in ws:
+                    m = re.match(r, x)
+                    if m is None:  # or m.string != x:
+                        break  # They differ not only in column i, j
+                else: # Words in ws differ only in column i+1 and j+1
+                    giveEliminatingWords({i, j, k})
 
 
 def giveHints():  # r is the regular expression for filtering the words
@@ -507,7 +545,7 @@ def main():
             if len(ws) == 1:
                 print(f'\nThe Word might be: {ws[0]}\n')
             if len(ws) > 1:
-                print('Here are some recommended words:')
+                print(f'{ln()}. Here are some recommended words:')
                 r = ''
                 for i in range(min(8*inOneRow, len(ws))):
                     r += ' ' + ws[i]
@@ -515,7 +553,7 @@ def main():
                         print(r);  r = ''
                 if len(r) > 0:
                     print(r)
-                ifDiffOnlyInOneColumn()
+                ifDiffIn1or2or3Columns()
 
             recomm = ws[0]
             # Process the answer from the Wordle game
