@@ -248,22 +248,14 @@ def reducePattern(word, colors):
                 pass  # So in wc and cc the '#' will be set
             elif bl == 0 and ye > 0:
                 # We know _l at least gr+ye times is in the word, and can't be in yep
-                s1 = f"{ln()}. Delete word, which does NOT contain at least {gr+ye} '{_l}'"
-                s2 = f"or in position"
-                for _p in yep:
-                    s2 += f' {_p+1}'
-                print(s1, s2)
                 wsc = ws.copy()
                 for w in wsc:
                     if w.count(_l) < (gr+ye):
                         ws.remove(w)
-                        continue
-                    for _p in yep:
-                        if w[_p] == _l:
-                            ws.remove(w)
-                            break
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                if lwsc > lws:
+                    print(f"{ln()}. Delete word, which does NOT contain at least {gr+ye} '{_l}'")
+                    print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             elif bl > 0 and ye == 0:
                 # _l occurs in the right position(s), delete from the others
                 _p = ''
@@ -277,22 +269,15 @@ def reducePattern(word, colors):
             elif bl > 0 and ye > 0:
                 # Because bl > 0, the word contains gr+ye _l letter. Here the words with NOT
                 # gr+ye _l letter or in the Yellow position will be filtered out
-                s = f"{ln()}. Delete word, which does NOT contain {gr+ye} '{_l}' or in position"
-                for _p in yep:
-                    s += f' {_p+1}'
-                print(s)
                 wsc = ws.copy()
                 for w in wsc:
-                    if w.count(_l) != (gr+ye):
+                    if w.count(_l) != (gr+ye):  # We know the exact number!
                         ws.remove(w)
-                        continue
-                    for _p in yep:
-                        if w[_p] == _l:
-                            ws.remove(w)
-                            break
 
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                if lwsc > lws:
+                    print(f"{ln()}. Delete word, which does NOT contain {gr+ye} '{_l}'")
+                    print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             else:
                 print(f'{ln()}. Finish for {bl=} {gr=} {ye=}')
                 breakpoint()  # ???? Figure out later what to do
@@ -324,14 +309,14 @@ def reducePattern(word, colors):
             if bl == 0 and ye == 1:
                 wc = wc[:i] + '#' + wc[i+1:]
                 cc = cc[:i] + '#' + cc[i+1:]
-                print(f"{ln()}. Delete word, which does NOT contain '{_l}' or in position {i+1}")
                 wsc = ws.copy()
-                _p = {-1, i}  # The interpreter should do this loop cleaning, does it?
                 for w in wsc:
-                    if w.find(_l) in _p:
+                    if w.find(_l) == -1:
                         ws.remove(w)
                 lwsc = len(wsc);  lws = len(ws)
-                print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
+                if lwsc > lws:
+                    print(f"{ln()}. Delete word, which does NOT contain '{_l}'")
+                    print(f'{ln()}. {lwsc}-{lws}={lwsc - lws} impossible words were deleted')
             elif bl > 0 and ye == 1:
                 wc = wc[:i] + '#' + wc[i+1:]
                 cc = cc[:i] + '#' + cc[i+1:]
@@ -367,7 +352,7 @@ def reducePattern(word, colors):
                     _p += f" {j+1}"
                     patt[j].remove(_l)
             if len(_p) > 0:
-                print(f"{ln()}. Remove '{_l}' from position {_p}")
+                print(f"{ln()}. Remove '{_l}' from position{_p}")
             wc = wc[:i] + '#' + wc[i+1:]
             cc = cc[:i] + '#' + cc[i+1:]
 
@@ -399,7 +384,7 @@ def deleteImpossibleWords():
         if m is None:
             ws.remove(w)
     lwsc = len(wsc) ; lws = len(ws)
-    print(f'{lwsc}-{lws}={lwsc-lws} impossible words were deleted')
+    print(f'{ln()}. {lwsc}-{lws}={lwsc-lws} impossible words were deleted')
 
 
 def giveEliminatingWords(cls):  # is a set with column indices
@@ -436,7 +421,7 @@ def giveEliminatingWords(cls):  # is a set with column indices
     ask = []
     for i in range(len(t)):
         ask.append(t[i][1])
-    print(f'{ln()}. Try to eliminate letters in column ', end="")
+    print(f'{ln()}. Try to eliminate letters in column', end="")
     for i in cls:
         print("", i+1, end="")
     print()
@@ -557,7 +542,7 @@ def main():
 
             recomm = ws[0]
             # Process the answer from the Wordle game
-            ans = input('Enter the first letter of the colors (or 9 to quit): ')
+            ans = input(f'{ln()}. Enter the first letter of the colors (or 9 to quit): ')
             ans = ans.upper()
             if ans[0] == '9':
                 break
