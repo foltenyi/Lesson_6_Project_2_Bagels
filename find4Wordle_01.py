@@ -58,6 +58,7 @@ inOneRow = 12  # How many words print in one row. It could be moved to class c,
 ##################### F U N C T I O N S #####################
 
 def getParameters():
+    global c
     print('You can modify these:')
     for m in ins.getmembers(c):  # type(m)=tuple (name as string, value as it is)
         if m[0][0] != '_':
@@ -264,7 +265,7 @@ def reducePattern(word, colors):
                         _p += f" {j+1}"
                         patt[j].remove(_l)
                 if len(_p) > 0:
-                    print(f"{ln()}. Remove '{_l}' from position {_p}")
+                    print(f"{ln()}. Remove '{_l}' from position{_p}")
 
             elif bl > 0 and ye > 0:
                 # Because bl > 0, the word contains gr+ye _l letter. Here the words with NOT
@@ -374,8 +375,6 @@ def deleteImpossibleWords():
     for p in patt:
         r += '[' + ''.join(p) + ']'
 
-    print(f"{ln()}. Delete word, which does NOT correspond to the regular expression:")
-    print(f'{r}')
     # breakpoint()  # ???? DEBUG
     # Remove all the words from ws, which does NOT satisfy the regular expression
     wsc = ws.copy()
@@ -384,7 +383,10 @@ def deleteImpossibleWords():
         if m is None:
             ws.remove(w)
     lwsc = len(wsc) ; lws = len(ws)
-    print(f'{ln()}. {lwsc}-{lws}={lwsc-lws} impossible words were deleted')
+    if lwsc > lws:
+        print(f"{ln()}. Delete word, which does NOT correspond to the regular expression:")
+        print(f'{r}')
+        print(f'{ln()}. {lwsc}-{lws}={lwsc-lws} impossible words were deleted')
 
 
 def giveEliminatingWords(cls):  # is a set with column indices
@@ -473,7 +475,7 @@ def ifDiffIn1or2or3Columns():
 
 
 def giveHints():  # r is the regular expression for filtering the words
-    global patt
+    global c, patt
 
     print('\nThe solution word is NOT in the storage, after finding it,')
     print('please add it to the text file or the SQLite database\n')
@@ -490,7 +492,11 @@ def giveHints():  # r is the regular expression for filtering the words
     pri = exec(pr)  # pri is iterable for the Cartesian product, presented in tuples
     """
     # For 5-letter words
-    pri = ite.product(patt[0], patt[1], patt[2], patt[3], patt[4])
+    if c.NUM_LETTERS == 5:
+        pri = ite.product(patt[0], patt[1], patt[2], patt[3], patt[4])
+    else:
+        print(f"{ln()}. Add for {c.NUM_LETTERS} or fix the above 'exec'")
+        breakpoint()  # ???? FIX IT
 
     allWords = []
     for t in pri:
@@ -542,7 +548,11 @@ def main():
 
             recomm = ws[0]
             # Process the answer from the Wordle game
-            ans = input(f'{ln()}. Enter the first letter of the colors (or 9 to quit): ')
+            while True:
+                ans = input(f'{ln()}. Enter the first letter of the colors (or 9 to quit): ')
+                if len(ans) > 0:
+                    break
+                
             ans = ans.upper()
             if ans[0] == '9':
                 break
