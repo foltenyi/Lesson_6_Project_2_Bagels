@@ -82,6 +82,9 @@ If you entered the first word, just enter the first letters of the colors the co
 answered. If you entered a different word, prepend it. E.g. for 5 letter words:
 bgbyy        - if you entered the first (or only) suggested word
 frame gbyby  - if you entered 'frame', not the first of the suggested word
+If "Try to eliminate letters ..." printed, the interpretation of
+(word n) - if give word, n letters will be checked; if a letter occurs
+    multiple times, it counted multiple times.
 If the solution word was not found, please add it to the words storage, which
 can be a text file, order doesn't matter, but try to keep it ordered.
 If the suggested word was not accepted by Wordle, please delete it, or
@@ -198,7 +201,26 @@ def getWords_SetupGame():
     print(f"Words with {cnt} 'E's, use one of them, if you wish.")
     print(re.sub("[',]", "", str(eee)[1:-1]))
     wsCopy = ws.copy()  # Keep the original words
-    # ws setup is done
+    # ws and wsCopy setup is done
+
+    # Check whether each word has c.NUM_LETTERS length and is unique
+    wasError = False
+    for i in range(len(ws)):
+        if len(ws[i]) != c.NUM_LETTERS:
+            wasError = True
+            print(f"{ln()}. {i+1}. word is not {c.NUM_LETTERS} long: {ws[i]}")
+    if wasError:
+        print(f'{ln()}. Correct the error and try again,')
+        exit(1)
+
+    # All words have the right length and are upper case.
+    if len(set(ws)) < len(ws):
+        print(f'{ln()}. Eliminate duplicate words and try again.')
+        for i in range(len(ws) - 1):
+            for j in range(i+1, len(ws)):
+                if ws[i] == ws[j]:
+                    print(f"{ln()}. '{ws[i]}' in positions {i+1} and {j+1} is duplicate.")
+        exit(2)
 
     # Set up the pattern for each position, everything is possible
     patt = []
@@ -392,12 +414,15 @@ def deleteImpossibleWords():
 def giveEliminatingWords(cls):  # is a set with column indices
     global patt, ws, wsCopy, inOneRow
     # Make a set from the letters from column in cls
-    s = set()
+    s = set(); keepOrder = []; all = []
     for x in ws:
         for i in range(len(ws[0])):
             if i in cls:
-                s.add(x[i])
-    # print(f'{ln()}. {s=}')  # ???? DEBUG
+                s.add(x[i])  # All unique letters in all columns and remaining words
+                all.append(x[i])
+                if x[i] not in keepOrder:
+                    keepOrder.append(x[i])
+
     cnt = 0;  ask = []
     for w in wsCopy:
         if (l := len(s & set(w))) >= cnt:
@@ -405,6 +430,7 @@ def giveEliminatingWords(cls):  # is a set with column indices
                 cnt = l;  ask = []
             ask.append(w)
 
+    """
     # Sort ask against the set on position col, taking out the other sets.
     s = set()
     # breakpoint()  # ???? DEBUG
@@ -423,12 +449,28 @@ def giveEliminatingWords(cls):  # is a set with column indices
     ask = []
     for i in range(len(t)):
         ask.append(t[i][1])
+    """
+
+    # breakpoint()  # ???? DEBUG
+    # Fill up t with (word,n), n - how many letters would be checked by word
+    t = []
+    for i in range(len(ask)):
+        n = 0
+        for x in set(ask[i]):
+            n += all.count(x)
+        t.append((ask[i], n))
+
+    t.sort(reverse=True, key=lambda x: x[1])
     print(f'{ln()}. Try to eliminate letters in column', end="")
     for i in cls:
         print("", i+1, end="")
     print()
+
+    print(f'{ln()}. The letters to be checked: {str(keepOrder)[1:-1]}')
     print(f'{ln()}. {len(ask)=}')  # ???? DEBUG
-    print('', re.sub("[',]", "", str(ask[:inOneRow])[1:-1]))
+
+    for i in range(0, min(len(t), 2*inOneRow), int(inOneRow/2)):
+        print('', re.sub("[',]", "", str(t[i: i+int(inOneRow/2)])[1:-1]))
 
 
 def ifDiffIn1or2or3Columns():
@@ -552,7 +594,7 @@ def main():
                 ans = input(f'{ln()}. Enter the first letter of the colors (or 9 to quit): ')
                 if len(ans) > 0:
                     break
-                
+
             ans = ans.upper()
             if ans[0] == '9':
                 break
