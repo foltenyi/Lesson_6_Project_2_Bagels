@@ -200,6 +200,7 @@ def getWords_SetupGame():
     # breakpoint()  # ???? DEBUG
     print(f"Words with {cnt} 'E's, use one of them, if you wish.")
     print(re.sub("[',]", "", str(eee)[1:-1]))
+    
     wsCopy = ws.copy()  # Keep the original words
     # ws and wsCopy setup is done
 
@@ -423,51 +424,25 @@ def giveEliminatingWords(cls):  # is a set with column indices
                 if x[i] not in keepOrder:
                     keepOrder.append(x[i])
 
-    cnt = 0;  ask = []
-    for w in wsCopy:
-        if (l := len(s & set(w))) >= cnt:
-            if l > cnt:
-                cnt = l;  ask = []
-            ask.append(w)
-
-    """
-    # Sort ask against the set on position col, taking out the other sets.
-    s = set()
-    # breakpoint()  # ???? DEBUG
-    for i in range(len(patt)):
-        if i in cls:
-          s = s.union(patt[i])  # Should it be '+'?
-    for i in range(len(patt)):
-        if i not in cls:
-            s -= set(ws[0][i])
-
-    # Fill up t with (n,word), n - how many common letters are in s
-    t = []
-    for i in range(len(ask)):
-        t.append((len(s & set(ask[i])), ask[i]))
-    t.sort(reverse=True, key=lambda x: x[0])  # For equal numbers don't take x[1]
-    ask = []
-    for i in range(len(t)):
-        ask.append(t[i][1])
-    """
-
     # breakpoint()  # ???? DEBUG
     # Fill up t with (word,n), n - how many letters would be checked by word
-    t = []
-    for i in range(len(ask)):
+    maxCheck = 0; t = []
+    for w in wsCopy:
         n = 0
-        for x in set(ask[i]):
+        for x in set(w):
             n += all.count(x)
-        t.append((ask[i], n))
+        if n >= maxCheck:
+            if n > maxCheck:
+                maxCheck = n; t = []
+            t.append((w, n))
 
-    t.sort(reverse=True, key=lambda x: x[1])
     print(f'{ln()}. Try to eliminate letters in column', end="")
     for i in cls:
         print("", i+1, end="")
     print()
 
     print(f'{ln()}. The letters to be checked: {str(keepOrder)[1:-1]}')
-    print(f'{ln()}. {len(ask)=}')  # ???? DEBUG
+    print(f'{ln()}. {len(t)=}')  # ???? DEBUG
 
     for i in range(0, min(len(t), 2*inOneRow), int(inOneRow/2)):
         print('', re.sub("[',]", "", str(t[i: i+int(inOneRow/2)])[1:-1]))
@@ -519,7 +494,7 @@ def ifDiffIn1or2or3Columns():
 def giveHints():  # r is the regular expression for filtering the words
     global c, patt
 
-    print('\nThe solution word is NOT in the storage, after finding it,')
+    print('\n{ln()}. The solution word is NOT in the storage, after finding it,')
     print('please add it to the text file or the SQLite database\n')
     r = ''
     for p in patt:
@@ -545,21 +520,21 @@ def giveHints():  # r is the regular expression for filtering the words
         allWords.append(''.join(t))
 
     print(
-f"""As everywhere, case does NOT matter. The missing word should
+f"""{ln()}. As everywhere, case does NOT matter. The missing word should
 correspond to the next regular expression:
 {r}
 {len(allWords):,d} possible strings can be generated. They will be printed in small
 groups, if any of them is a meaningful word, please add it to the word storage.
 After adding some words, you can try again.
 """)
-    gr = 8;  r = ''
+    gr = 12;  r = ''
     for i in range(len(allWords)):
         r += ' ' + allWords[i]
         if i % inOneRow == inOneRow - 1:
             print(r);  r = ''
             if i % (gr*inOneRow) == (gr*inOneRow) - 1:
-                print('If any meaningful word above, add it to the choose-able words.')
-                if input("Hit Enter to continue, or 'q' to quit").lower().startswith('q'):
+                print(f'{ln()}. If any meaningful word above, add it to the choose-able words.')
+                if input("Hit Enter to continue, or 'q' to quit: ").lower().startswith('q'):
                     exit(1)
     if len(r) > 0:
         print(r)
@@ -567,16 +542,41 @@ After adding some words, you can try again.
 
 #######################################################################
 def main():
-    global ws
+    global az, c, ws, wsCopy, patt
+    
+    seenLetters = {}  # 3 dictionaries: k=['B','G','Y'], v=set(letters seen so far)
+    def checkLetters(wr=None, cl=None):  # wr - word, cl - colors from wordle, OR entered mistake
+        nonlocal seenLetters
+        # breakpoint()  # ???? DEBUG
+        if wr is None:  # Initialize
+            seenLetters = {'B':set(), 'G':set(), 'Y':set()}
+            return True
+        
+        for l, c in zip(wr, cl):
+            seenLetters[c].add(l)  # Remember this
+            if c == 'B':  # It must not been seen as Green or Yellow
+                if l in (seenLetters['G'] | seenLetters['Y']):
+                    print(f"{ln()}. For letter '{l}' now Black, "
+                          "previously Green or Yellow was reported")
+                    return False
+            if c in {'G','Y'}:  # It must not been seen as Black
+                if l in seenLetters['B']:
+                    print(f"{ln()}. For letter '{l}' now Green or Yellow, "
+                          "previously Black was reported")
+                    return False
+        return True
+    # checkLetters() ends
+
     # Double loop, the outher for repeating games, the inner to find the WORD.
+    getParameters()
+    printInstruction()
+    getWords_SetupGame()
     while True:
-        getParameters()
-        printInstruction()
-        getWords_SetupGame()
+        checkLetters()  # Initialize Letters tracking
 
         while True:
             if len(ws) == 1:
-                print(f'\nThe Word might be: {ws[0]}\n')
+                print(f'\n{ln()}. The Word might be: {ws[0]}\n')
             if len(ws) > 1:
                 print(f'{ln()}. Here are some recommended words:')
                 r = ''
@@ -608,21 +608,26 @@ def main():
                     print(f"You entered a wrong word '{ans[0]}', your input is ignored")
                     continue
             if len(ans) != 1:
-                print(f"You entered a wrong answer, please read the instruction.")
+                print(f"{ln()}. You entered a wrong answer, please read the instruction.")
                 printInstruction()
                 continue
 
             colors = ans[0]  # It must be c.NUM_LETTERS long and containing [BGY] only
             if len(colors) != c.NUM_LETTERS:
-                print(f"Your colors should contain {c.NUM_LETTERS} letters.")
+                print(f"{ln()}. Your colors should contain {c.NUM_LETTERS} letters.")
                 continue
             if len((re.search('[BGY]*', colors)).group(0)) != c.NUM_LETTERS:
-                print(f"For the colors use 'b', 'g', or 'y', case insensitive.")
+                print(f"{ln()}. For the colors use 'b', 'g', or 'y', case insensitive.")
                 continue
 
             if colors == "G"*c.NUM_LETTERS:
                 break  # THE WORD IS FOUND
+
+            if not checkLetters(recomm, colors):  # The problem was printed in the function
+                break
+            
             reducePattern(recomm, colors)
+            
             deleteImpossibleWords()
             # If anything left, continue the game
             # breakpoint()  # ???? DEBUG
@@ -634,8 +639,15 @@ def main():
             break
 
         # End of inner while True
-        if input('\nDo you want another assistance? (y/n): ').lower().startswith('n'):
+        if input(f'\n{ln()}. Do you want another assistance? (y/n): ').lower().startswith('n'):
             break
+        else:  # Reset ws, patt and play again
+            ws = wsCopy.copy()
+            patt = []
+            for i in range(c.NUM_LETTERS):
+                patt.append(set(az).copy())
+
+    # while True
 
 
 #######################################################################
