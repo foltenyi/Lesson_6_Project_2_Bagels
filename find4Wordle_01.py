@@ -200,7 +200,7 @@ def getWords_SetupGame():
     # breakpoint()  # ???? DEBUG
     print(f"Words with {cnt} 'E's, use one of them, if you wish.")
     print(re.sub("[',]", "", str(eee)[1:-1]))
-    
+
     wsCopy = ws.copy()  # Keep the original words
     # ws and wsCopy setup is done
 
@@ -543,7 +543,7 @@ After adding some words, you can try again.
 #######################################################################
 def main():
     global az, c, ws, wsCopy, patt
-    
+
     seenLetters = {}  # 3 dictionaries: k=['B','G','Y'], v=set(letters seen so far)
     def checkLetters(wr=None, cl=None):  # wr - word, cl - colors from wordle, OR entered mistake
         nonlocal seenLetters
@@ -551,19 +551,24 @@ def main():
         if wr is None:  # Initialize
             seenLetters = {'B':set(), 'G':set(), 'Y':set()}
             return True
-        
-        for l, c in zip(wr, cl):
-            seenLetters[c].add(l)  # Remember this
-            if c == 'B':  # It must not been seen as Green or Yellow
-                if l in (seenLetters['G'] | seenLetters['Y']):
-                    print(f"{ln()}. For letter '{l}' now Black, "
-                          "previously Green or Yellow was reported")
+
+        for i, (l, c) in enumerate(zip(wr, cl), 1):
+            seenLetters[c].add((l,i))  # Remember this
+
+        # Check for inconsistent enties
+        for c, s in seenLetters.items():  # Get the key, set of (letter, column)
+            # print(f"{c=} {s=}")
+            for _c, _s in seenLetters.items():  # I don't know how to continue the outher loop
+                # print(f"{_c=} {_s=}")
+                if c == _c:
+                    continue
+                x = s & _s
+                if len(x) > 0:  # We have a problem
+                    l, cl = x.pop()  # One is enough
+                    print(f"\n{ln()}. For letter '{l}' in column "
+                          f"{cl} '{c}' and '{_c}' was reported")
                     return False
-            if c in {'G','Y'}:  # It must not been seen as Black
-                if l in seenLetters['B']:
-                    print(f"{ln()}. For letter '{l}' now Green or Yellow, "
-                          "previously Black was reported")
-                    return False
+
         return True
     # checkLetters() ends
 
@@ -625,9 +630,9 @@ def main():
 
             if not checkLetters(recomm, colors):  # The problem was printed in the function
                 break
-            
+
             reducePattern(recomm, colors)
-            
+
             deleteImpossibleWords()
             # If anything left, continue the game
             # breakpoint()  # ???? DEBUG
